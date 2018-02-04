@@ -5,7 +5,7 @@ import zlib
 from .encryption_parameters import encryption_parameters
 from .file_entry import XP3FileEntry
 try:
-    from numpy import frombuffer, uint8, bitwise_and, bitwise_xor, right_shift, concatenate, stack
+    from numpy import frombuffer, uint8, bitwise_and, bitwise_xor, right_shift, concatenate
     numpy = True
 except ModuleNotFoundError:
     numpy = False
@@ -121,6 +121,6 @@ class XP3File(XP3FileEntry):
             for index in range(len(data)):
                 data[index] ^= xor_key
 
-        # Overwrite the buffer with decrypted data
+        # Overwrite the buffer with decrypted/encrypted data
         output_buffer.seek(0)
         output_buffer.write(data.tobytes())
