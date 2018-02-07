@@ -26,13 +26,13 @@ class XP3(XP3Reader, XP3Writer):
             if isinstance(target, str):
                 if not os.path.isfile(target):
                     raise FileNotFoundError
-                with open(target, 'rb') as buffer:
-                    target = buffer.read()
+                target = open(target, 'rb')
             XP3Reader.__init__(self, target, silent)
         elif self._is_writemode:
             if isinstance(target, str):
-                if not os.path.exists(os.path.dirname(target)):
-                    os.makedirs(os.path.dirname(target))
+                dir = os.path.dirname(target)
+                if dir and not os.path.exists(dir):
+                    os.makedirs(dir)
                 target = open(target, 'wb')
             XP3Writer.__init__(self, target, silent)
         else:
