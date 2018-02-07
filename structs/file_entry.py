@@ -178,11 +178,7 @@ class XP3FileEntry:
 
         if encryption:
             if adlr.value != encryption.adler32:
-                raise AssertionError
-        else:
-            if info.is_encrypted:
-                # file is marked as encrypted, but no encryption chunk provided
-                raise AssertionError
+                raise AssertionError('Checksum values in adlr chunk and encryption chunk do not match')
 
     @classmethod
     def read_from(cls, buffer: BufferedReader):
@@ -228,7 +224,7 @@ class XP3FileEntry:
 
     @property
     def file_path(self):
-        if self.is_encrypted:
+        if self.is_encrypted and self.encryption:
             return self.encryption.file_path
         else:
             return self.info.file_path
