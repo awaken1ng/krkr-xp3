@@ -40,7 +40,7 @@ class XP3Reader:
 
     def __getitem__(self, item):
         """Access a file by it's internal file path or position in file index"""
-        return XP3File(self.file_index[item], self.buffer, self.use_numpy)
+        return XP3File(self.file_index[item], self.buffer, self.silent, self.use_numpy)
 
     def open(self, item):
         return self.__getitem__(item)

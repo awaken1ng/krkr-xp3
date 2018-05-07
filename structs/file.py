@@ -18,7 +18,7 @@ class XP3DecryptionError(Exception):
 class XP3File(XP3FileEntry):
     """Wrapper around file entry with buffer access to be able to read the file"""
 
-    def __init__(self, index_entry: XP3FileEntry, buffer, use_numpy):
+    def __init__(self, index_entry: XP3FileEntry, buffer, silent, use_numpy):
         super(XP3File, self).__init__(
             encryption=index_entry.encryption,
             time=index_entry.time,
@@ -27,6 +27,7 @@ class XP3File(XP3FileEntry):
             info=index_entry.info
         )
         self.buffer = buffer
+        self.silent = silent
         self.use_numpy = use_numpy
 
     def read(self, encryption_type='none', raw=False):
@@ -55,7 +56,7 @@ class XP3File(XP3FileEntry):
         if no location is specified, unpacks into folder with archive name (data.xp3, unpacks into data folder)
         """
         file = self.read(encryption_type=encryption_type, raw=raw)
-        if zlib.adler32(file) != self.adler32:
+        if zlib.adler32(file) != self.adler32 and not self.silent:
             print('! Checksum error')
 
         if not to:
