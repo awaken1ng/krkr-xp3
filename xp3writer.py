@@ -97,6 +97,17 @@ class XP3Writer:
         :return XP3FileEntry object and compressed or uncompressed file (to write into buffer)
         """
 
+        adlr = XP3FileAdler.from_data(uncompressed_data)
+
+        is_encrypted = False if encryption_type in ('none', None) else True
+        if is_encrypted:
+            uncompressed_data = self.xor(uncompressed_data, adlr.value, encryption_type, self.use_numpy)
+            _, _, _, name = encryption_parameters[encryption_type]
+            encryption = XP3FileEncryption(adlr.value, internal_filepath, name)
+            path_hash = hashlib.md5(internal_filepath.lower().encode('utf-16le')).hexdigest()
+        else:
+            encryption = path_hash = None
+
         uncompressed_size = len(uncompressed_data)
         compressed_data = zlib.compress(uncompressed_data, level=9)
         compressed_size = len(compressed_data)
@@ -109,18 +120,7 @@ class XP3Writer:
             data = compressed_data
             is_compressed = True
 
-        adlr = XP3FileAdler.from_data(uncompressed_data)
         time = XP3FileTime(timestamp)
-
-        is_encrypted = False if encryption_type in ('none', None) else True
-        if is_encrypted:
-            data = self.xor(data, adlr.value, encryption_type, self.use_numpy)
-            _, _, _, name = encryption_parameters[encryption_type]
-            encryption = XP3FileEncryption(adlr.value, internal_filepath, name)
-            path_hash = hashlib.md5(internal_filepath.lower().encode('utf-16le')).hexdigest()
-        else:
-            encryption = path_hash = None
-
         info = XP3FileInfo(is_encrypted=is_encrypted,
                            uncompressed_size=uncompressed_size,
                            compressed_size=compressed_size,
@@ -128,7 +128,7 @@ class XP3Writer:
                            )
 
         segment = XP3FileSegments.segment(
-            compressed=is_compressed,
+            is_compressed=is_compressed,
             offset=offset,
             uncompressed_size=uncompressed_size,
             compressed_size=compressed_size

@@ -61,7 +61,7 @@ class XP3FileTime:
 
 
 class XP3FileSegments:
-    segment = namedtuple('Segment', 'compressed, offset, uncompressed_size, compressed_size')
+    segment = namedtuple('Segment', 'is_compressed, offset, uncompressed_size, compressed_size')
     _header = struct.Struct('<Q')
     _segment = struct.Struct('<?xxxQQQ')
 

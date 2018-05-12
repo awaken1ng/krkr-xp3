@@ -32,23 +32,23 @@ class XP3File(XP3FileEntry):
 
     def read(self, encryption_type='none', raw=False):
         """Reads the file from buffer and return it's data"""
-        with BytesIO() as file_buffer:
-            # Read the data
-            for segment in self.segm:
-                self.buffer.seek(segment.offset)
-                data = self.buffer.read(segment.compressed_size)
-                if segment.compressed:
-                    data = zlib.decompress(data)
-                if len(data) != segment.uncompressed_size:
-                    raise AssertionError(len(data), segment.uncompressed_size)
-                file_buffer.write(data)
+        for segment in self.segm:
+            self.buffer.seek(segment.offset)
+            data = self.buffer.read(segment.compressed_size)
+
+            if segment.is_compressed:
+                data = zlib.decompress(data)
+            if len(data) != segment.uncompressed_size:
+                raise AssertionError(len(data), segment.uncompressed_size)
 
             if self.is_encrypted:
+                file_buffer = BytesIO(data)
                 if encryption_type in ('none', None) and not raw:
                     raise XP3DecryptionError('File is encrypted and no encryption type was specified')
                 self.xor(file_buffer, self.adler32, encryption_type, self.use_numpy)
-
-            return file_buffer.getvalue()
+                data = file_buffer.getvalue()
+                file_buffer.close()
+        return data
 
     def extract(self, to='', name=None, encryption_type='none', raw=False):
         """

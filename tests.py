@@ -2,44 +2,44 @@ import os
 import unittest
 import datetime
 import tempfile
-from io import BytesIO
 from xp3 import XP3, XP3Reader, XP3Writer
 
 
-class EncryptionNumpy(unittest.TestCase):
-    """Encryption test with Numpy XORing"""
+class Encryption(unittest.TestCase):
+    """Encryption test with Numpy and pure Python XORing"""
 
-    def test(self):
-        # Crash test early if Numpy is not present
-        import numpy
-        del numpy
-
-        with XP3Writer(BytesIO(), silent=True, use_numpy=True) as xp3:
-            xp3.add('dummy_file', b'dummy_data', 'neko_vol0')
+    def encrypt_and_decrypt(self, data, encryption_type, use_numpy):
+        with XP3Writer(silent=True, use_numpy=use_numpy) as xp3:
+            xp3.add('dummy_file', data, encryption_type)
             archive = xp3.pack_up()
 
-        with XP3Reader(archive, silent=True, use_numpy=True) as xp3:
+        with XP3Reader(archive, silent=True, use_numpy=use_numpy) as xp3:
             self.assertTrue(xp3.is_encrypted)
             file = xp3.open('dummy_file')
             self.assertTrue(file.is_encrypted)
             self.assertEqual('dummy_file', file.file_path)
-            self.assertEqual(b'dummy_data', file.read(encryption_type='neko_vol0'))
+            self.assertEqual(data, file.read(encryption_type=encryption_type))
 
+    def with_numpy(self, data):
+        # Crash test early if Numpy is not present
+        import numpy
+        del numpy
+        self.encrypt_and_decrypt(data, 'neko_vol0', True)
 
-class EncryptionPure(unittest.TestCase):
-    """Encryption test with pure Python XORing"""
+    def with_python(self, data):
+        self.encrypt_and_decrypt(data, 'neko_vol0', False)
 
-    def test(self):
-        with XP3Writer(silent=True, use_numpy=False) as xp3:
-            xp3.add('dummy_file', b'dummy_data', 'neko_vol0')
-            archive = xp3.pack_up()
+    def test_numpy_uncompressed(self):
+        self.with_numpy(b'dummy_data')
 
-        with XP3Reader(archive, silent=True, use_numpy=False) as xp3:
-            self.assertTrue(xp3.is_encrypted)
-            file = xp3.open(0)
-            self.assertTrue(file.is_encrypted)
-            self.assertEqual('dummy_file', file.file_path)
-            self.assertEqual(b'dummy_data', file.read(encryption_type='neko_vol0'))
+    def test_numpy_compressed(self):
+        self.with_numpy(b'111111111111')
+
+    def test_python_uncompressed(self):
+        self.with_python(b'dummy_data')
+
+    def test_python_compressed(self):
+        self.with_python(b'111111111111')
 
 
 class FolderReadAndWrite(unittest.TestCase):
@@ -100,7 +100,7 @@ class MemoryReadAndWrite(unittest.TestCase):
                 self.assertEqual(filepath, file.file_path)
                 self.assertEqual(data, file.read())
                 self.assertEqual(timestamp // 1000, file.time.timestamp)
-                self.assertEqual(compressed, file.segm.segments[0].compressed)
+                self.assertEqual(compressed, file.segm.segments[0].is_compressed)
 
 
 class DuplicateWrite(unittest.TestCase):
